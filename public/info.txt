@@ -1,0 +1,14 @@
+>app
+  >android
+  >ios
+  >linux
+  >mac
+  >windows
+>audio
+>doc
+>img
+>logo
+  >png
+>temp
+  >sec
+>vid
