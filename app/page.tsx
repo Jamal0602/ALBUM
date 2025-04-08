@@ -9,8 +9,7 @@ import { RecentFiles } from "@/components/dashboard/recent-files"
 import { StorageUsage } from "@/components/dashboard/storage-usage"
 
 export const metadata: Metadata = {
-  title: "Dashboard | Direct.Cubiz.Space",
-  description: "Manage all your media assets in one place",
+  title: "Dashboard",
 }
 
 export default function DashboardPage() {
@@ -19,12 +18,6 @@ export default function DashboardPage() {
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
         <div className="flex items-center space-x-2">
-          <Link href="/upload">
-            <Button>
-              <FileUpIcon className="mr-2 h-4 w-4" />
-              Upload Files
-            </Button>
-          </Link>
         </div>
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -41,7 +34,6 @@ export default function DashboardPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Files</CardTitle>
-            <FileUpIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">1,284</div>
@@ -70,35 +62,9 @@ export default function DashboardPage() {
         </Card>
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4">
-          <CardHeader>
-            <CardTitle>Storage Overview</CardTitle>
-          </CardHeader>
-          <CardContent className="pl-2">
-            <Overview />
-          </CardContent>
-        </Card>
-        <Card className="col-span-3">
-          <CardHeader>
-            <CardTitle>Storage Usage</CardTitle>
-            <CardDescription>Breakdown by file type</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <StorageUsage />
-          </CardContent>
-        </Card>
       </div>
       <div className="grid gap-4 md:grid-cols-1">
-        <Card className="col-span-1">
-          <CardHeader>
-            <CardTitle>Recent Files</CardTitle>
-            <CardDescription>Recently uploaded or modified files</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <RecentFiles />
-          </CardContent>
-        </Card>
-      </div>
+       </div>
     </div>
   )
 }

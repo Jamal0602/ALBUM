@@ -15,7 +15,6 @@ const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "Direct.Cubiz.Space",
-  description: "Manage all your media assets in one place",
     generator: 'v0.dev'
 }
 
@@ -43,7 +42,6 @@ export default function RootLayout({
     </html>
   )
 }
-
 
 
 import './globals.css'
