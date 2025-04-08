@@ -10,7 +10,6 @@ import { StorageUsage } from "@/components/dashboard/storage-usage"
 
 export const metadata: Metadata = {
   title: "Dashboard",
-  content='3; url=http://ja.cubiz.space/' http-equiv='refresh'
 }
 
 export default function DashboardPage() {
