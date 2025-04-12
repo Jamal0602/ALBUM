@@ -1,0 +1,7 @@
+{
+  "scripts": {
+    "build": "node scripts/generate-file-manifest.js && next build",
+    "dev": "node scripts/generate-file-manifest.js && next dev",
+    "create-examples": "node scripts/create-example-files.js"
+  }
+}

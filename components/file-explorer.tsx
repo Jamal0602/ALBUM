@@ -1,109 +1,147 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { getPublicFiles } from "@/lib/file-actions"
-import { FileCard } from "@/components/file-card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Input } from "@/components/ui/input"
-import { Loader2, Search } from "lucide-react"
-
-type FileInfo = {
-  name: string
-  path: string
-  size: number
-  type: string
-  lastModified: string
-}
+import { useState, useEffect } from "react"
+import { FileList } from "./file-list"
+import { FileGrid } from "./file-grid"
+import { Breadcrumb } from "./breadcrumb"
+import { SearchBar } from "./search-bar"
+import { ViewToggle } from "./view-toggle"
+import { EmptyState } from "./empty-state"
+import type { FileType } from "@/types/file"
+import { Loader2, HelpCircle, Github, RefreshCw } from "lucide-react"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
 
 export function FileExplorer() {
-  const [files, setFiles] = useState<FileInfo[]>([])
-  const [filteredFiles, setFilteredFiles] = useState<FileInfo[]>([])
-  const [loading, setLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [view, setView] = useState<"grid" | "list">("grid")
+  const [files, setFiles] = useState<FileType[]>([])
+  const [filteredFiles, setFilteredFiles] = useState<FileType[]>([])
+  const [currentPath, setCurrentPath] = useState<string[]>(["public"])
+  const [isLoading, setIsLoading] = useState(true)
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
+  const [searchQuery, setSearchQuery] = useState("")
+  const [error, setError] = useState<string | null>(null)
+  const [useGitHub, setUseGitHub] = useState(true)
 
   useEffect(() => {
-    async function loadFiles() {
-      try {
-        const fileData = await getPublicFiles()
-        setFiles(fileData)
-        setFilteredFiles(fileData)
-      } catch (error) {
-        console.error("Error loading files:", error)
-      } finally {
-        setLoading(false)
+    fetchFiles()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPath, useGitHub])
+
+  const fetchFiles = async () => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      const path = currentPath.join("/")
+      const source = useGitHub ? "github" : "local"
+      const response = await fetch(`/api/files?path=${path}&source=${source}&t=${Date.now()}`)
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch files: ${response.status}`)
       }
-    }
 
-    loadFiles()
-  }, [])
+      const data = await response.json()
+
+      if (data.error) {
+        throw new Error(data.error)
+      }
+
+      setFiles(data)
+      setFilteredFiles(data)
+    } catch (error) {
+      console.error("Error fetching files:", error)
+      setError(error instanceof Error ? error.message : "Failed to load files")
+      setFiles([])
+      setFilteredFiles([])
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   useEffect(() => {
-    if (searchTerm) {
-      const filtered = files.filter((file) => file.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    if (searchQuery) {
+      const filtered = files.filter((file) => file.name.toLowerCase().includes(searchQuery.toLowerCase()))
       setFilteredFiles(filtered)
     } else {
       setFilteredFiles(files)
     }
-  }, [searchTerm, files])
+  }, [searchQuery, files])
 
-  const fileTypes = Array.from(new Set(files.map((file) => file.type)))
+  const handleSearch = (query: string) => {
+    setSearchQuery(query)
+  }
+
+  const navigateTo = (path: string[]) => {
+    setCurrentPath(path)
+  }
+
+  const navigateToFolder = (folderName: string) => {
+    setCurrentPath([...currentPath, folderName])
+  }
+
+  const toggleGitHub = () => {
+    setUseGitHub(!useGitHub)
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <div className="relative w-full sm:w-72">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search files..."
-            className="pl-8"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Public Files Explorer</h1>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">
-            {filteredFiles.length} file{filteredFiles.length !== 1 ? "s" : ""}
-          </span>
+          <Link href="/help">
+            <Button variant="ghost" size="sm" className="gap-1">
+              <HelpCircle className="h-4 w-4" />
+              <span className="hidden sm:inline">Help</span>
+            </Button>
+          </Link>
+          <Button variant="outline" size="sm" onClick={fetchFiles} title="Refresh files">
+            <RefreshCw className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
-      {loading ? (
-        <div className="flex justify-center items-center h-64">
+      <div className="flex items-center space-x-2 bg-muted/40 p-2 rounded-md">
+        <Switch id="github-mode" checked={useGitHub} onCheckedChange={toggleGitHub} />
+        <Label htmlFor="github-mode" className="flex items-center gap-1.5 cursor-pointer">
+          <Github className="h-4 w-4" />
+          <span>Use GitHub Repository</span>
+        </Label>
+        <div className="text-xs text-muted-foreground ml-auto">
+          {useGitHub ? "Fetching from GitHub" : "Using local files"}
+        </div>
+      </div>
+
+      <Breadcrumb path={currentPath} onNavigate={navigateTo} />
+
+      <div className="flex flex-col sm:flex-row justify-between gap-4">
+        <SearchBar onSearch={handleSearch} />
+        <div className="flex items-center gap-2">
+          <ViewToggle currentView={viewMode} onViewChange={setViewMode} />
+          <span className="text-sm text-muted-foreground">{filteredFiles.length} files</span>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="flex justify-center items-center min-h-[400px]">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
+      ) : error ? (
+        <EmptyState message={`Error: ${error}`} actionLabel="Try Again" onAction={fetchFiles} />
+      ) : filteredFiles.length === 0 ? (
+        <EmptyState
+          message={searchQuery ? "No files match your search" : "No files found in this folder"}
+          actionLabel={searchQuery ? "Clear Search" : "Refresh"}
+          onAction={searchQuery ? () => handleSearch("") : fetchFiles}
+        />
       ) : (
-        <Tabs defaultValue="all" className="w-full">
-          <TabsList className="mb-4 flex flex-wrap">
-            <TabsTrigger value="all">All Files</TabsTrigger>
-            {fileTypes.map((type) => (
-              <TabsTrigger key={type} value={type}>
-                {type}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-
-          <TabsContent value="all" className="mt-0">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {filteredFiles.map((file) => (
-                <FileCard key={file.path} file={file} />
-              ))}
-            </div>
-          </TabsContent>
-
-          {fileTypes.map((type) => (
-            <TabsContent key={type} value={type} className="mt-0">
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {filteredFiles
-                  .filter((file) => file.type === type)
-                  .map((file) => (
-                    <FileCard key={file.path} file={file} />
-                  ))}
-              </div>
-            </TabsContent>
-          ))}
-        </Tabs>
+        <>
+          {viewMode === "grid" ? (
+            <FileGrid files={filteredFiles} onFolderClick={navigateToFolder} />
+          ) : (
+            <FileList files={filteredFiles} onFolderClick={navigateToFolder} />
+          )}
+        </>
       )}
     </div>
   )

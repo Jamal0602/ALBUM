@@ -1,62 +1,38 @@
-"use client"
-
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import type { FileType } from "@/lib/types"
-import { formatFileSize, formatDate } from "@/lib/utils"
-import { FileIcon } from "./file-icon"
-import { Folder } from "lucide-react"
-import { cn } from "@/lib/utils"
+import type { FileType } from "@/types/file"
+import { FileRow } from "./file-row"
+import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
 interface FileListProps {
   files: FileType[]
-  onFolderClick: (path: string) => void
-  onFileClick: (file: FileType) => void
-  selectedFilePath?: string
+  onFolderClick: (folderName: string) => void
 }
 
-export function FileList({ files, onFolderClick, onFileClick, selectedFilePath }: FileListProps) {
-  return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead className="w-[40px]"></TableHead>
-          <TableHead>Name</TableHead>
-          <TableHead>Type</TableHead>
-          <TableHead>Size</TableHead>
-          <TableHead>Modified</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {files.map((file) => (
-          <TableRow
-            key={file.path}
-            className={cn("cursor-pointer hover:bg-muted/50", selectedFilePath === file.path && "bg-muted")}
-            onClick={() => (file.isDirectory ? onFolderClick(file.path) : onFileClick(file))}
-          >
-            <TableCell>
-              {file.isDirectory ? (
-                <Folder className="h-5 w-5 text-muted-foreground" />
-              ) : (
-                <FileIcon type={file.type} className="h-5 w-5" />
-              )}
-            </TableCell>
-            <TableCell className="font-medium">{file.name}</TableCell>
-            <TableCell>{file.isDirectory ? "Folder" : file.type.split("/")[1] || file.type}</TableCell>
-            <TableCell>
-              {file.isDirectory ? `${file.children?.length || 0} items` : formatFileSize(file.size)}
-            </TableCell>
-            <TableCell>{formatDate(file.lastModified)}</TableCell>
-          </TableRow>
-        ))}
+export function FileList({ files, onFolderClick }: FileListProps) {
+  if (files.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[300px] text-muted-foreground">
+        <p>No files found</p>
+      </div>
+    )
+  }
 
-        {files.length === 0 && (
+  return (
+    <div className="border rounded-md">
+      <Table>
+        <TableHeader>
           <TableRow>
-            <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-              No files found
-            </TableCell>
+            <TableHead className="w-[50%]">Name</TableHead>
+            <TableHead>Size</TableHead>
+            <TableHead>Last Modified</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
           </TableRow>
-        )}
-      </TableBody>
-    </Table>
+        </TableHeader>
+        <TableBody>
+          {files.map((file) => (
+            <FileRow key={file.path} file={file} onFolderClick={onFolderClick} />
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   )
 }

@@ -1,64 +1,50 @@
 "use client"
 
+import type { FileType } from "@/types/file"
+import { getFileIcon } from "@/lib/file-icons"
+import { formatFileSize } from "@/lib/format-file-size"
+import { FileActions } from "./file-actions"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
-import { formatFileSize, formatDate } from "@/lib/utils"
-import { FileIcon } from "./file-icon"
-import Image from "next/image"
-import { Folder } from "lucide-react"
-import type { FileType } from "@/lib/types"
-import { cn } from "@/lib/utils"
 
 interface FileCardProps {
   file: FileType
-  onFolderClick: (path: string) => void
-  onFileClick: (file: FileType) => void
-  isSelected: boolean
+  onFolderClick: (folderName: string) => void
 }
 
-export function FileCard({ file, onFolderClick, onFileClick, isSelected }: FileCardProps) {
-  const isImage = file.type.startsWith("image/")
-  const isFolder = file.isDirectory
+export function FileCard({ file, onFolderClick }: FileCardProps) {
+  const FileIcon = getFileIcon(file)
 
   const handleClick = () => {
-    if (isFolder) {
-      onFolderClick(file.path)
-    } else {
-      onFileClick(file)
+    if (file.type === "directory") {
+      onFolderClick(file.name)
     }
   }
 
   return (
-    <Card
-      className={cn(
-        "overflow-hidden hover:shadow-md transition-shadow cursor-pointer",
-        isSelected && "ring-2 ring-primary",
-      )}
-      onClick={handleClick}
-    >
-      <div className="aspect-square relative bg-muted flex items-center justify-center">
-        {isFolder ? (
-          <Folder className="h-16 w-16 text-muted-foreground" />
-        ) : isImage ? (
-          <Image
-            src={file.path || "/placeholder.svg"}
-            alt={file.name}
-            fill
-            className="object-cover"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          />
-        ) : (
-          <FileIcon type={file.type} className="h-16 w-16 text-muted-foreground" />
-        )}
-      </div>
+    <Card className="overflow-hidden hover:shadow-md transition-shadow">
       <CardContent className="p-4">
-        <h3 className="font-medium truncate" title={file.name}>
-          {file.name}
-        </h3>
-        <p className="text-sm text-muted-foreground mt-1">
-          {isFolder ? `${file.children?.length || 0} items` : formatFileSize(file.size)}
-        </p>
+        <div
+          className={`flex flex-col items-center justify-center gap-2 ${file.type === "directory" ? "cursor-pointer" : ""}`}
+          onClick={handleClick}
+        >
+          <div className="h-16 w-16 flex items-center justify-center text-muted-foreground">
+            <FileIcon size={48} />
+          </div>
+          <div className="w-full text-center">
+            <p className="text-sm font-medium truncate" title={file.name}>
+              {file.name}
+            </p>
+            {file.type === "file" && file.size && (
+              <p className="text-xs text-muted-foreground">{formatFileSize(file.size)}</p>
+            )}
+          </div>
+        </div>
       </CardContent>
-      <CardFooter className="p-4 pt-0 text-xs text-muted-foreground">{formatDate(file.lastModified)}</CardFooter>
+      {file.type === "file" && (
+        <CardFooter className="p-2 bg-muted/50 flex justify-center">
+          <FileActions file={file} />
+        </CardFooter>
+      )}
     </Card>
   )
 }
