@@ -63,7 +63,7 @@ export function FileActions({ file }: FileActionsProps) {
             size="icon"
             onClick={() =>
               window.open(
-                file.url?.replace("raw.githubusercontent.com", "github.com").replace("/main/", "/blob/main/"),
+                file.url?.replace("file.cubiz.space"),
                 "_blank",
               )
             }
