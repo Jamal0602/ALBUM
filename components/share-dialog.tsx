@@ -24,10 +24,22 @@ interface ShareDialogProps {
 export function ShareDialog({ file, open, onOpenChange }: ShareDialogProps) {
   const [copied, setCopied] = useState(false)
 
-  // Generate a shareable URL for the file
-  // If it's a GitHub file, use the direct URL, otherwise construct a local URL
-  const fileUrl =
-    file.url || (typeof window !== "undefined" ? `${window.location.origin}/${file.path}` : `/${file.path}`)
+  // Generate a shareable URL for the file using file.cubiz.space domain
+  const getShareableUrl = (): string => {
+    if (file.url && file.url.includes("githubusercontent.com")) {
+      // Extract the path from GitHub URL
+      const pathMatch = file.url.match(/\/main\/(.+)$/)
+      if (pathMatch && pathMatch[1]) {
+        // Remove "public/" from the path if it exists
+        return `https://file.cubiz.space/${pathMatch[1].replace(/^public\//, "")}`
+      }
+    }
+
+    // For local files, replace the domain and remove "public/" prefix
+    return `https://file.cubiz.space/${file.path.replace(/^public\//, "")}`
+  }
+
+  const fileUrl = getShareableUrl()
 
   const handleCopy = () => {
     navigator.clipboard.writeText(fileUrl)

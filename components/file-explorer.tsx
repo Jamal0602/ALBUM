@@ -1,18 +1,21 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { FileList } from "./file-list"
 import { FileGrid } from "./file-grid"
 import { Breadcrumb } from "./breadcrumb"
 import { SearchBar } from "./search-bar"
 import { ViewToggle } from "./view-toggle"
 import { EmptyState } from "./empty-state"
+import { ThemeToggle } from "./theme-toggle"
 import type { FileType } from "@/types/file"
 import { Loader2, HelpCircle, Github, RefreshCw } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
+import { FileManagementMenu } from "./file-management-menu"
+import { DownloadClient } from "./download-client"
 
 export function FileExplorer() {
   const [files, setFiles] = useState<FileType[]>([])
@@ -24,12 +27,7 @@ export function FileExplorer() {
   const [error, setError] = useState<string | null>(null)
   const [useGitHub, setUseGitHub] = useState(true)
 
-  useEffect(() => {
-    fetchFiles()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPath, useGitHub])
-
-  const fetchFiles = async () => {
+  const fetchFiles = useCallback(async () => {
     setIsLoading(true)
     setError(null)
     try {
@@ -57,7 +55,12 @@ export function FileExplorer() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [currentPath, useGitHub])
+
+  useEffect(() => {
+    fetchFiles()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPath, useGitHub, fetchFiles])
 
   useEffect(() => {
     if (searchQuery) {
@@ -84,11 +87,25 @@ export function FileExplorer() {
     setUseGitHub(!useGitHub)
   }
 
+  useEffect(() => {
+    const handleFileOperationComplete = () => {
+      fetchFiles()
+    }
+
+    window.addEventListener("file-operation-complete", handleFileOperationComplete)
+
+    return () => {
+      window.removeEventListener("file-operation-complete", handleFileOperationComplete)
+    }
+  }, [fetchFiles])
+
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center flex-wrap gap-2">
         <h1 className="text-2xl font-bold">Public Files Explorer</h1>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <ThemeToggle />
+          <DownloadClient />
           <Link href="/help">
             <Button variant="ghost" size="sm" className="gap-1">
               <HelpCircle className="h-4 w-4" />
@@ -115,7 +132,10 @@ export function FileExplorer() {
       <Breadcrumb path={currentPath} onNavigate={navigateTo} />
 
       <div className="flex flex-col sm:flex-row justify-between gap-4">
-        <SearchBar onSearch={handleSearch} />
+        <div className="flex items-center gap-2">
+          <SearchBar onSearch={handleSearch} />
+          {!useGitHub && <FileManagementMenu currentPath={currentPath} onSuccess={fetchFiles} disabled={isLoading} />}
+        </div>
         <div className="flex items-center gap-2">
           <ViewToggle currentView={viewMode} onViewChange={setViewMode} />
           <span className="text-sm text-muted-foreground">{filteredFiles.length} files</span>
